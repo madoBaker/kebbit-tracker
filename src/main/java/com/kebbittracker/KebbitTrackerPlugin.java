@@ -134,6 +134,10 @@ public class KebbitTrackerPlugin extends Plugin
 	// How far the player may be from the burrow they inspected
 	private static final int MAX_BURROW_DISTANCE = 10;
 
+	// A hunting session ends after 5 minutes (in game ticks) without a trail, or on walking away
+	private static final int SESSION_TIMEOUT_TICKS = 500;
+	private static final int SESSION_LEAVE_DISTANCE = 30;
+
 	private static final Set<Integer> NOOSE_WAND_IDS = ImmutableSet.of(
 		ItemID.NOOSE_WAND,
 		ItemID.NOOSE_WAND_WOOD,
@@ -177,6 +181,11 @@ public class KebbitTrackerPlugin extends Plugin
 	@Getter
 	private boolean nooseEquipped;
 
+	// Infoboxes and warnings only show once the player has started tracking, until they stop
+	private boolean sessionActive;
+	private int idleTicks;
+	private WorldPoint lastTrailLocation;
+
 	private final Set<TileObject> tracks = new HashSet<>();
 	private final Set<TileObject> endSpots = new HashSet<>();
 	private final Set<TileObject> midSpots = new HashSet<>();
@@ -216,6 +225,7 @@ public class KebbitTrackerPlugin extends Plugin
 		overlayManager.remove(overlay);
 		removeRingInfoBox();
 		wearingRing = false;
+		sessionActive = false;
 		clearObjects();
 		reset();
 	}
@@ -303,7 +313,7 @@ public class KebbitTrackerPlugin extends Plugin
 
 	private void updateRingInfoBox()
 	{
-		if (!wearingRing || !config.showRingCharges())
+		if (!sessionActive || !wearingRing || !config.showRingCharges())
 		{
 			removeRingInfoBox();
 			return;
@@ -434,6 +444,14 @@ public class KebbitTrackerPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
+		if (tracks.isEmpty())
+		{
+			// Not near any trails, e.g. after teleporting away
+			reset();
+			endSession();
+			return;
+		}
+
 		// Each segment of a trail (spot to spot) is driven by its own varbit
 		final Map<Integer, Set<WorldPoint>> segments = new HashMap<>();
 		final Set<WorldPoint> shown = new HashSet<>();
@@ -451,8 +469,11 @@ public class KebbitTrackerPlugin extends Plugin
 		if (shown.isEmpty())
 		{
 			reset();
+			updateIdleSession();
 			return;
 		}
+
+		markActive();
 
 		if (shown.equals(shownTiles) && target != null)
 		{
@@ -470,6 +491,46 @@ public class KebbitTrackerPlugin extends Plugin
 		target = findSpotAt(trailEnd);
 		log.debug("Trail start {} segments {} end {} -> target {}", trailStart, segments.size(), trailEnd,
 			target == null ? null : target.getWorldLocation());
+	}
+
+	// A trail is showing: (re)start the session and remember where the player is tracking
+	private void markActive()
+	{
+		final Player player = client.getLocalPlayer();
+		idleTicks = 0;
+		lastTrailLocation = player != null ? player.getWorldLocation() : null;
+		if (!sessionActive)
+		{
+			sessionActive = true;
+			updateRingInfoBox();
+		}
+	}
+
+	// Between trails: end the session once the player has been idle for too long or walked off
+	private void updateIdleSession()
+	{
+		if (!sessionActive)
+		{
+			return;
+		}
+
+		final Player player = client.getLocalPlayer();
+		final boolean walkedAway = player != null && lastTrailLocation != null
+			&& player.getWorldLocation().distanceTo2D(lastTrailLocation) > SESSION_LEAVE_DISTANCE;
+		if (++idleTicks >= SESSION_TIMEOUT_TICKS || walkedAway)
+		{
+			endSession();
+		}
+	}
+
+	private void endSession()
+	{
+		if (sessionActive)
+		{
+			sessionActive = false;
+			lastTrailLocation = null;
+			updateRingInfoBox();
+		}
 	}
 
 	private WorldPoint findStart()

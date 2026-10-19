@@ -37,4 +37,5 @@ Herbiboars are not included; use RuneLite's built-in Herbiboar plugin.
 
 ## Notes
 
-Ring charges are read from game messages. If the infobox shows `?`, use **Check** on the ring once.
+- Overlays stay hidden until a trail is revealed, and hide again after 5 minutes without a trail or when leaving the hunting area.
+- Ring charges are read from game messages. If the infobox shows `?`, use **Check** on the ring once.
