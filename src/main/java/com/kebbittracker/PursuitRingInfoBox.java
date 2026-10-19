@@ -1,4 +1,4 @@
-package com.weaseltracker;
+package com.kebbittracker;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -6,9 +6,9 @@ import net.runelite.client.ui.overlay.infobox.InfoBox;
 
 class PursuitRingInfoBox extends InfoBox
 {
-	private final WeaselTrackerPlugin plugin;
+	private final KebbitTrackerPlugin plugin;
 
-	PursuitRingInfoBox(BufferedImage image, WeaselTrackerPlugin plugin)
+	PursuitRingInfoBox(BufferedImage image, KebbitTrackerPlugin plugin)
 	{
 		super(image, plugin);
 		this.plugin = plugin;

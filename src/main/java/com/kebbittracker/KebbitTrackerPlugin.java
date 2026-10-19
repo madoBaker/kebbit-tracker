@@ -1,4 +1,4 @@
-package com.weaseltracker;
+package com.kebbittracker;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Provides;
@@ -59,11 +59,11 @@ import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
  */
 @Slf4j
 @PluginDescriptor(
-	name = "Weasel Tracker",
+	name = "Kebbit Tracker",
 	description = "Highlights the hiding spot at the end of a hunter track",
-	tags = {"hunter", "tracking", "kebbit", "weasel", "desert devil", "trail", "burrow", "pursuit"}
+	tags = {"hunter", "tracking", "kebbit", "weasel", "desert devil", "noose", "trail", "burrow", "pursuit"}
 )
-public class WeaselTrackerPlugin extends Plugin
+public class KebbitTrackerPlugin extends Plugin
 {
 	// Models a footprint tile takes on once it has been revealed
 	private static final Set<Integer> SHOWN_TRACK_IDS = ImmutableSet.of(
@@ -134,6 +134,15 @@ public class WeaselTrackerPlugin extends Plugin
 	// How far the player may be from the burrow they inspected
 	private static final int MAX_BURROW_DISTANCE = 10;
 
+	private static final Set<Integer> NOOSE_WAND_IDS = ImmutableSet.of(
+		ItemID.NOOSE_WAND,
+		ItemID.NOOSE_WAND_WOOD,
+		ItemID.NOOSE_WAND_POLAR,
+		ItemID.NOOSE_WAND_DESERT,
+		ItemID.NOOSE_WAND_JUNGLE,
+		ItemID.NOOSE_WAND_RAZORBACK
+	);
+
 	private static final int RING_MAX_CHARGES = 10;
 	private static final Pattern RING_CHARGES_PATTERN = Pattern.compile("ring of pursuit (?:has|reveals the entire trail to you\\. It has) (\\d+) charges? left");
 	private static final String RING_CRUMBLE_MESSAGE = "ring of pursuit reveals the entire trail to you. <col=ff0000>It then crumbles to dust";
@@ -145,10 +154,10 @@ public class WeaselTrackerPlugin extends Plugin
 	private OverlayManager overlayManager;
 
 	@Inject
-	private WeaselTrackerOverlay overlay;
+	private KebbitTrackerOverlay overlay;
 
 	@Inject
-	private WeaselTrackerConfig config;
+	private KebbitTrackerConfig config;
 
 	@Inject
 	private ConfigManager configManager;
@@ -165,6 +174,9 @@ public class WeaselTrackerPlugin extends Plugin
 	private PursuitRingInfoBox ringInfoBox;
 	private boolean wearingRing;
 
+	@Getter
+	private boolean nooseEquipped;
+
 	private final Set<TileObject> tracks = new HashSet<>();
 	private final Set<TileObject> endSpots = new HashSet<>();
 	private final Set<TileObject> midSpots = new HashSet<>();
@@ -180,9 +192,9 @@ public class WeaselTrackerPlugin extends Plugin
 	private TileObject target;
 
 	@Provides
-	WeaselTrackerConfig provideConfig(ConfigManager configManager)
+	KebbitTrackerConfig provideConfig(ConfigManager configManager)
 	{
-		return configManager.getConfig(WeaselTrackerConfig.class);
+		return configManager.getConfig(KebbitTrackerConfig.class);
 	}
 
 	@Override
@@ -193,6 +205,7 @@ public class WeaselTrackerPlugin extends Plugin
 		{
 			final ItemContainer worn = client.getItemContainer(InventoryID.WORN);
 			wearingRing = isWearingRing(worn);
+			nooseEquipped = isWieldingNoose(worn);
 			updateRingInfoBox();
 		});
 	}
@@ -213,12 +226,12 @@ public class WeaselTrackerPlugin extends Plugin
 	 */
 	Integer getRingCharges()
 	{
-		return configManager.getRSProfileConfiguration(WeaselTrackerConfig.GROUP, WeaselTrackerConfig.RING_CHARGES_KEY, Integer.class);
+		return configManager.getRSProfileConfiguration(KebbitTrackerConfig.GROUP, KebbitTrackerConfig.RING_CHARGES_KEY, Integer.class);
 	}
 
 	private void setRingCharges(int charges)
 	{
-		configManager.setRSProfileConfiguration(WeaselTrackerConfig.GROUP, WeaselTrackerConfig.RING_CHARGES_KEY, charges);
+		configManager.setRSProfileConfiguration(KebbitTrackerConfig.GROUP, KebbitTrackerConfig.RING_CHARGES_KEY, charges);
 	}
 
 	@Subscribe
@@ -253,13 +266,14 @@ public class WeaselTrackerPlugin extends Plugin
 		}
 
 		wearingRing = isWearingRing(event.getItemContainer());
+		nooseEquipped = isWieldingNoose(event.getItemContainer());
 		updateRingInfoBox();
 	}
 
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		if (WeaselTrackerConfig.GROUP.equals(event.getGroup()) && "showRingCharges".equals(event.getKey()))
+		if (KebbitTrackerConfig.GROUP.equals(event.getGroup()) && "showRingCharges".equals(event.getKey()))
 		{
 			clientThread.invokeLater(this::updateRingInfoBox);
 		}
@@ -274,6 +288,17 @@ public class WeaselTrackerPlugin extends Plugin
 
 		final Item ring = worn.getItem(EquipmentInventorySlot.RING.getSlotIdx());
 		return ring != null && ring.getId() == ItemID.RING_OF_PURSUIT;
+	}
+
+	private static boolean isWieldingNoose(ItemContainer worn)
+	{
+		if (worn == null)
+		{
+			return false;
+		}
+
+		final Item weapon = worn.getItem(EquipmentInventorySlot.WEAPON.getSlotIdx());
+		return weapon != null && NOOSE_WAND_IDS.contains(weapon.getId());
 	}
 
 	private void updateRingInfoBox()

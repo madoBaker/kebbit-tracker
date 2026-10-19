@@ -14,7 +14,7 @@ repositories {
 }
 
 def runeLiteVersion = 'latest.release'
-def pluginMainClass = 'com.weaseltracker.WeaselTrackerPluginTest'
+def pluginMainClass = 'com.kebbittracker.KebbitTrackerPluginTest'
 
 dependencies {
 	compileOnly group: 'net.runelite', name:'client', version: runeLiteVersion
@@ -27,7 +27,7 @@ dependencies {
 	testImplementation group: 'net.runelite', name:'jshell', version: runeLiteVersion
 }
 
-group = 'com.weaseltracker'
+group = 'com.kebbittracker'
 
 tasks.withType(JavaCompile).configureEach {
 	options.encoding = 'UTF-8'

@@ -1,4 +1,4 @@
-package com.weaseltracker;
+package com.kebbittracker;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -8,6 +8,7 @@ import java.awt.Shape;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.Perspective;
+import net.runelite.api.Point;
 import net.runelite.api.TileObject;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
@@ -17,15 +18,17 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.OverlayUtil;
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 
-class WeaselTrackerOverlay extends Overlay
+class KebbitTrackerOverlay extends Overlay
 {
+	private static final String NOOSE_WARNING = "Equip a noose wand";
+
 	private final Client client;
-	private final WeaselTrackerPlugin plugin;
-	private final WeaselTrackerConfig config;
+	private final KebbitTrackerPlugin plugin;
+	private final KebbitTrackerConfig config;
 	private final ModelOutlineRenderer modelOutlineRenderer;
 
 	@Inject
-	WeaselTrackerOverlay(Client client, WeaselTrackerPlugin plugin, WeaselTrackerConfig config, ModelOutlineRenderer modelOutlineRenderer)
+	KebbitTrackerOverlay(Client client, KebbitTrackerPlugin plugin, KebbitTrackerConfig config, ModelOutlineRenderer modelOutlineRenderer)
 	{
 		this.client = client;
 		this.plugin = plugin;
@@ -58,6 +61,15 @@ class WeaselTrackerOverlay extends Overlay
 		}
 
 		modelOutlineRenderer.drawOutline(target, config.outlineWidth(), color, 4);
+
+		if (config.nooseWarning() && !plugin.isNooseEquipped())
+		{
+			final Point textLocation = target.getCanvasTextLocation(graphics, NOOSE_WARNING, 150);
+			if (textLocation != null)
+			{
+				OverlayUtil.renderTextLocation(graphics, textLocation, NOOSE_WARNING, Color.RED);
+			}
+		}
 
 		if (config.fillClickbox())
 		{

@@ -1,8 +1,8 @@
-# Weasel Tracker
+# Kebbit Tracker
 
 A RuneLite plugin for Hunter tracking with a noose wand.
 
-![Highlighted bush at the end of a weasel track](docs/screenshot.png)
+![Highlighted bush at the end of a Feldip weasel track](docs/screenshot.png)
 
 ## Features
 
@@ -10,6 +10,7 @@ A RuneLite plugin for Hunter tracking with a noose wand.
   - With a ring of pursuit, the whole trail is revealed and the spot the creature is hiding in is highlighted.
   - Without one, the next spot to search is highlighted as the trail is uncovered.
 - **Ring of pursuit charges**: an infobox shows the remaining charges while the ring is worn.
+- **Noose wand warning**: a reminder appears above the hiding spot if no noose wand is equipped.
 
 ## Supported creatures
 
@@ -31,6 +32,7 @@ Herbiboars are not included; use RuneLite's built-in Herbiboar plugin.
 | Outline width | Thickness of the outline |
 | Fill clickbox | Shade the hiding spot's clickbox |
 | Ring of pursuit charges | Show the charges infobox |
+| Noose wand warning | Warn when no noose wand is equipped |
 | Highlight last track | Also mark the final tile of the trail |
 
 ## Notes

@@ -1,4 +1,4 @@
-package com.weaseltracker;
+package com.kebbittracker;
 
 import java.awt.Color;
 import net.runelite.client.config.Alpha;
@@ -7,10 +7,10 @@ import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.Range;
 
-@ConfigGroup(WeaselTrackerConfig.GROUP)
-public interface WeaselTrackerConfig extends Config
+@ConfigGroup(KebbitTrackerConfig.GROUP)
+public interface KebbitTrackerConfig extends Config
 {
-	String GROUP = "weaseltracker";
+	String GROUP = "kebbittracker";
 	String RING_CHARGES_KEY = "pursuitRingCharges";
 
 	@Alpha
@@ -55,6 +55,17 @@ public interface WeaselTrackerConfig extends Config
 		position = 4
 	)
 	default boolean showRingCharges()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "nooseWarning",
+		name = "Noose wand warning",
+		description = "Warn above the hiding spot when following a track without a noose wand equipped",
+		position = 5
+	)
+	default boolean nooseWarning()
 	{
 		return true;
 	}

@@ -1,4 +1,4 @@
-package com.weaseltracker;
+package com.kebbittracker;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -17,13 +17,13 @@ public class TrailEndTest
 	@Test
 	public void trailEndingAtFarBush()
 	{
-		assertEquals(new WorldPoint(2553, 2889, 0), WeaselTrackerPlugin.findTrailEnd(farBushTrail(), WEST_BURROW));
+		assertEquals(new WorldPoint(2553, 2889, 0), KebbitTrackerPlugin.findTrailEnd(farBushTrail(), WEST_BURROW));
 	}
 
 	@Test
 	public void trailPassingBesideBurrow()
 	{
-		assertEquals(new WorldPoint(2532, 2886, 0), WeaselTrackerPlugin.findTrailEnd(loopingTrail(), WEST_BURROW));
+		assertEquals(new WorldPoint(2532, 2886, 0), KebbitTrackerPlugin.findTrailEnd(loopingTrail(), WEST_BURROW));
 	}
 
 	private static Set<WorldPoint> tiles(int... xy)
