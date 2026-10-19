@@ -48,7 +48,10 @@ import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 
 /**
- * Hunter tracking trails are made of one multiloc per footprint tile, whose impostor switches to a
+ * Tracks Hunter creatures caught with a noose wand: Feldip weasels, polar, common and razor-backed
+ * kebbits, and desert devils. Herbiboars are left to RuneLite's built-in Herbiboar plugin.
+ *
+ * Their trails are made of one multiloc per footprint tile, whose impostor switches to a
  * "visible"/"fade" track model (driven by varbits) once that part of the trail is revealed. The ring
  * of pursuit reveals every tile at once, so instead of relying on reveal order we walk the revealed
  * tiles outward from the burrow the player inspected and take the tile furthest along the trail as
@@ -57,8 +60,8 @@ import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 @Slf4j
 @PluginDescriptor(
 	name = "Weasel Tracker",
-	description = "Highlights the bush at the end of a hunter track",
-	tags = {"hunter", "tracking", "kebbit", "weasel", "trail", "burrow"}
+	description = "Highlights the hiding spot at the end of a hunter track",
+	tags = {"hunter", "tracking", "kebbit", "weasel", "desert devil", "trail", "burrow", "pursuit"}
 )
 public class WeaselTrackerPlugin extends Plugin
 {
@@ -82,14 +85,6 @@ public class WeaselTrackerPlugin extends Plugin
 		ObjectID.HUNTING_TRAIL_VISIBLE180_POLARCORNER,
 		ObjectID.HUNTING_TRAIL_FADE_POLARCORNER,
 		ObjectID.HUNTING_TRAIL_FADE180_POLARCORNER,
-		ObjectID.HUNTING_TRAIL_VISIBLE_FOSSIL,
-		ObjectID.HUNTING_TRAIL_VISIBLE_FOSSIL180,
-		ObjectID.HUNTING_TRAIL_FADE_FOSSIL,
-		ObjectID.HUNTING_TRAIL_FADE_FOSSIL180,
-		ObjectID.HUNTING_TRAIL_VISIBLE_FOSSILCORNER,
-		ObjectID.HUNTING_TRAIL_VISIBLE180_FOSSILCORNER,
-		ObjectID.HUNTING_TRAIL_FADE_FOSSILCORNER,
-		ObjectID.HUNTING_TRAIL_FADE180_FOSSILCORNER,
 		ObjectID.HUNTING_TRAIL_VISIBLE_DARK,
 		ObjectID.HUNTING_TRAIL_VISIBLE180_DARK,
 		ObjectID.HUNTING_TRAIL_FADE180_DARK,
@@ -98,17 +93,16 @@ public class WeaselTrackerPlugin extends Plugin
 		ObjectID.HUNTING_TRAIL_FADE180_CORNER_DARK
 	);
 
-	// Where the animal hides at the end of a trail
+	// Hiding spots: bushes, disturbed sand and snow drifts
 	private static final Set<Integer> END_SPOT_IDS = ImmutableSet.of(
 		ObjectID.HUNTING_TRAIL_END_JUNGLE,
 		ObjectID.HUNTING_TRAIL_END_BUSH29,
 		ObjectID.HUNTING_TRAIL_END_BUSH35_55,
 		ObjectID.HUNTING_TRAIL_END_DESERT,
-		ObjectID.HUNTING_TRAIL_END_POLAR,
-		ObjectID.HUNTING_TRAIL_END_FOSSIL
+		ObjectID.HUNTING_TRAIL_END_POLAR
 	);
 
-	// Burrows that trails start from
+	// Dens trails start from: burrows and holes
 	private static final Set<Integer> BURROW_IDS = ImmutableSet.of(
 		ObjectID.HUNTING_TRAIL_SPAWN1,
 		ObjectID.HUNTING_TRAIL_SPAWN2,
@@ -121,13 +115,12 @@ public class WeaselTrackerPlugin extends Plugin
 		ObjectID.HUNTING_TRAIL_SPAWN_DESERT1,
 		ObjectID.HUNTING_TRAIL_SPAWN_DESERT2,
 		ObjectID.HUNTING_TRAIL_SPAWN_POLAR1,
-		ObjectID.HUNTING_TRAIL_SPAWN_POLAR2,
-		ObjectID.HUNTING_TRAIL_SPAWN_FOSSIL1,
-		ObjectID.HUNTING_TRAIL_SPAWN_FOSSIL2,
-		ObjectID.HUNTING_TRAIL_SPAWN_FOSSIL3,
-		ObjectID.HUNTING_TRAIL_SPAWN_FOSSIL4,
-		ObjectID.HUNTING_TRAIL_SPAWN_FOSSIL5
+		ObjectID.HUNTING_TRAIL_SPAWN_POLAR2
 	);
+
+	// Connectors (plants, cacti, rockslides, hollow logs, tunnels) inspected to reveal the next segment
+	private static final int FIRST_CONNECTOR_ID = ObjectID.HUNTING_TRAIL_CLUE3_0;
+	private static final int LAST_CONNECTOR_ID = ObjectID.HUNTING_TRAIL_CLUE8_8;
 
 	// Footprint tiles this close (in tiles) are treated as connected; small gaps occur around plants
 	private static final int MAX_STEP = 2;
@@ -383,6 +376,11 @@ public class WeaselTrackerPlugin extends Plugin
 			burrows.add(object);
 			return;
 		}
+		if (id >= FIRST_CONNECTOR_ID && id <= LAST_CONNECTOR_ID)
+		{
+			midSpots.add(object);
+			return;
+		}
 
 		final ObjectComposition def = client.getObjectDefinition(id);
 		if (def == null)
@@ -393,10 +391,6 @@ public class WeaselTrackerPlugin extends Plugin
 		if (isTrack(def))
 		{
 			tracks.add(object);
-		}
-		else if (isMidSpot(def))
-		{
-			midSpots.add(object);
 		}
 	}
 
@@ -677,8 +671,8 @@ public class WeaselTrackerPlugin extends Plugin
 	}
 
 	/**
-	 * Picks the hiding spot at the end of the trail. With a ring of pursuit that is the bush the
-	 * animal is in; otherwise it is the next bush or plant to search.
+	 * Picks the hiding spot at the end of the trail. With a ring of pursuit that is where the animal
+	 * is hiding; otherwise it is the next hiding spot or connector to search.
 	 */
 	private TileObject findSpotAt(WorldPoint end)
 	{
@@ -739,25 +733,6 @@ public class WeaselTrackerPlugin extends Plugin
 		for (int id : impostorIds)
 		{
 			if (SHOWN_TRACK_IDS.contains(id))
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	// Plants and other spots along the trail that get inspected
-	private static boolean isMidSpot(ObjectComposition def)
-	{
-		final String[] actions = def.getActions();
-		if (actions == null)
-		{
-			return false;
-		}
-
-		for (String action : actions)
-		{
-			if ("Inspect".equalsIgnoreCase(action))
 			{
 				return true;
 			}
